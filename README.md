@@ -1,4 +1,4 @@
-coffee-script-compiler
-======================
+CoffeeScript Compiler
+=====================
 
-Java CoffeeScript compiler
+A CoffeeScript compiler using Java
