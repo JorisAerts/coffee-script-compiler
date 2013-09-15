@@ -4,3 +4,6 @@
 *.jar
 *.war
 *.ear
+
+# Apple junk
+.DS_Store
