@@ -11,3 +11,8 @@ Goals:
 - Command-line compilation
 - Compilation using the .jar package
 - Compilation as an ant-task
+
+TODO:
+------
+- Improve the code :-)
+- Add Source Map support
