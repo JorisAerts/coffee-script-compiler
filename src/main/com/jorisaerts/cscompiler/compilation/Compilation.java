@@ -2,6 +2,7 @@ package com.jorisaerts.cscompiler.compilation;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,9 +11,11 @@ import com.jorisaerts.cscompiler.dependencies.DependencyList;
 import com.jorisaerts.cscompiler.dependencies.FileList;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
 import com.jorisaerts.cscompiler.helpers.FileIOHelper;
+import com.jorisaerts.cscompiler.log.LogStream;
 
 public class Compilation extends CompilationBase {
 
+	public PrintStream out = new LogStream();
 	final Class<CoffeeScriptCompiler> Compiler;
 
 	public Compilation(Class<CoffeeScriptCompiler> compiler, List<File> inputFileList) {
@@ -47,9 +50,17 @@ public class Compilation extends CompilationBase {
 		return resultList;
 	}
 
-	public void compile() {
+	private FileList resolveDependencies() {
+		out.print("Resolving dependencies...");
 		FileList fileList = new DependencyList();
 		fileList.addAll(getInputFileList());
+		out.println(" done.");
+		return fileList;
+	}
+
+	public void compile() {
+		long starttime = System.currentTimeMillis();
+		FileList fileList = resolveDependencies();
 		try (CoffeeScriptCompiler compiler = Compiler.newInstance()) {
 			if (isCombine()) {
 				compileCombined(compiler, fileList, FileHelper.getJavaScriptFromCoffeeFile(fileList.get(fileList.size() - 1)));
@@ -59,12 +70,16 @@ public class Compilation extends CompilationBase {
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+		long totaltime = System.currentTimeMillis() - starttime;
+		out.println("Compilation done in " + totaltime / 1000.0 + " seconds.");
 	}
 
 	private void compile(CoffeeScriptCompiler compiler, FileList fileList) throws Throwable {
 		String compiledScript;
 		for (File file : FileHelper.getCoffeeScriptFiles(fileList)) {
+			out.print("Compiling '" + file + "'...");
 			compiledScript = compiler.compile(file);
+			out.println(" done.");
 			File targetFile = FileHelper.getJavaScriptFromCoffeeFile(file);
 			FileIOHelper.writeFile(targetFile, compiledScript);
 		}
@@ -80,7 +95,11 @@ public class Compilation extends CompilationBase {
 				e.printStackTrace();
 			}
 		}
+
+		out.print("Compiling...");
 		compiledScript = compiler.compile(combinedScript.toString());
+		out.println(" done.");
+
 		combinedScript = new StringBuffer();
 		for (File file : FileHelper.getJavaScriptFiles(fileList)) {
 			try {

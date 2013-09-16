@@ -17,6 +17,7 @@ public class Main {
 		File inputFile = new File(args[0]);
 		File outputDirectory = FileHelper.getDirectory(inputFile);
 		Compilation compilation = new Compilation(inputFile, outputDirectory);
+		compilation.out = System.out;
 		compilation.compile();
 	}
 
