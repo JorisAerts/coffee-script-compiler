@@ -1,0 +1,31 @@
+<html>
+	<head>
+	<script src="coffee-script.js"></script>
+	<script>
+	
+		console.log(CoffeeScript.compile("class extends test\n constructor:->\n test:(a...)=>", { 
+			sourceMap: true, 
+			bare: true 
+		}));
+		
+		console.log(CoffeeScript.compile("a=1", { 
+			sourceMap: true, 
+			bare: true 
+		}));
+		
+		console.log(CoffeeScript.compile("class test extends test\n constructor:->\n test:(a...)=>", { 
+			sourceMap: true, 
+			bare: true 
+		}));
+		
+		console.log(CoffeeScript.compile("class test1\nclass test extends test\n constructor:->\n test:(a...)=>", { 
+			sourceMap: true, 
+			bare: true 
+		}));
+		
+		
+	</script>
+	
+	</head>
+
+</html>

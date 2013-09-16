@@ -20,6 +20,7 @@ public class Main {
 
 		Compilation compilation = new Compilation(inputFile, outputDirectory);
 		compilation.out = System.out;
+		compilation.setCombine(false);
 		compilation.compile();
 	}
 

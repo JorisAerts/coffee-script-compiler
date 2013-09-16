@@ -13,7 +13,7 @@ import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 @SuppressWarnings("serial")
 public class DependencyList extends FileList {
 
-	private final static Pattern requirePattern = Pattern.compile("^\\#\\=\\s+require\\s+\"([\\w\\\\/\\\\.]+)\"", Pattern.MULTILINE);
+	private final static Pattern requirePattern = Pattern.compile("^\\#\\=\\s+require\\s+\"(.+)\"", Pattern.MULTILINE);
 
 	private final FileListMap dependencyMap = new FileListMap();
 
@@ -43,7 +43,8 @@ public class DependencyList extends FileList {
 			String contents = FileIOHelper.readFile(file);
 			Matcher matcher = requirePattern.matcher(contents);
 			while (matcher.find()) {
-				addDependency(file, new File(FileHelper.getDirectory(file) + File.separator + matcher.group(1)));
+				File dependency = new File(FileHelper.getDirectory(file) + File.separator + matcher.group(1));
+				addDependency(file, dependency);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -55,15 +56,13 @@ public class DependencyList extends FileList {
 		FileList dependencyList = getDependencyMapList(sourceFile);
 		if (!dependencyList.contains(dependendFile)) {
 			dependencyList.add(dependendFile);
+			add(dependendFile);
 		}
-		add(dependendFile);
 	}
 
 	private FileList getDependencyMapList(File file) {
 		if (!dependencyMap.containsKey(file)) {
-			FileList fileList = new FileList();
-			dependencyMap.put(file, fileList);
-			return fileList;
+			dependencyMap.put(file, new FileList());
 		}
 		return dependencyMap.get(file);
 	}

@@ -15,8 +15,13 @@ public class RhinoCompiler extends CoffeeScriptCompiler {
 
 	public RhinoCompiler() throws Throwable {
 		cx = Context.enter();
+		cx.setOptimizationLevel(9);
+		cx.setLanguageVersion(Context.VERSION_1_7);
+		cx.setGeneratingSource(false);
+
 		scope = cx.initStandardObjects();
-		cx.evaluateReader(scope, FileIOHelper.getFileReader(COMPILER_FILENAME), "<cmd>", 1, null);
+		cx.evaluateReader(scope, FileIOHelper.getFileReader(COMPILER_FILENAME), "coffee", 1, null);
+
 		NativeObject coffeeScriptObject = (NativeObject) scope.get("CoffeeScript", scope);
 		compileFunction = (Function) coffeeScriptObject.get("compile", scope);
 	}

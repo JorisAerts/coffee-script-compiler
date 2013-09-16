@@ -6,6 +6,8 @@ import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 
 public abstract class CoffeeScriptCompiler implements AutoCloseable {
 
+	protected static boolean init = false;
+
 	protected final static String COMPILER_FILENAME = "./coffee/coffee-script.js";
 
 	public abstract String compile(String coffeeScript) throws Throwable;

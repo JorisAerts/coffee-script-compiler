@@ -12,6 +12,8 @@ import com.jorisaerts.cscompiler.dependencies.FileList;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
 import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 import com.jorisaerts.cscompiler.log.QuietLogStream;
+import com.jorisaerts.cscompiler.minify.Minifier;
+import com.jorisaerts.cscompiler.minify.RhinoMinifier;
 
 public class Compilation extends CompilationBase {
 
@@ -59,38 +61,50 @@ public class Compilation extends CompilationBase {
 		return fileList;
 	}
 
-	/** Start the compilation process. */
-	public void compile() {
+	/**
+	 * Start the compilation process.
+	 * 
+	 * @throws Throwable
+	 */
+	public void compile() throws Throwable {
 		long starttime = System.currentTimeMillis();
 		FileList fileList = resolveDependencies();
+		Minifier minifier = null;
+
+		if (isMinify()) {
+			minifier = new RhinoMinifier();
+		}
 		try (CoffeeScriptCompiler compiler = Compiler.newInstance()) {
 			if (isCombine()) {
-				compileCombined(compiler, fileList, FileHelper.getJavaScriptFromCoffeeFile(fileList.get(fileList.size() - 1)));
+				compileCombined(fileList, FileHelper.getJavaScriptFromCoffeeFile(fileList.get(fileList.size() - 1)), compiler, minifier);
 			} else {
-				compile(compiler, fileList);
+				compile(fileList, compiler, minifier);
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+
 		long totaltime = System.currentTimeMillis() - starttime;
 
 		out.println("Compilation done in " + totaltime / 1000.0 + " seconds.");
 	}
 
-	private void compile(CoffeeScriptCompiler compiler, FileList fileList) throws Throwable {
+	private void compile(FileList fileList, CoffeeScriptCompiler compiler, Minifier minifier) throws Throwable {
 		String compiledScript;
 		for (File file : FileHelper.getCoffeeScriptFiles(fileList)) {
 
-			out.print("Compiling '" + file + "'...");
-			compiledScript = compiler.compile(file);
-			out.println(" done.");
+			out.println("Compiling '" + file + "'...");
+			compiledScript = minify(compiler.compile(file), minifier);
 
 			File targetFile = FileHelper.getJavaScriptFromCoffeeFile(file);
 			FileIOHelper.writeFile(targetFile, compiledScript);
 		}
 	}
 
-	private void compileCombined(CoffeeScriptCompiler compiler, FileList fileList, File targetFile) throws Throwable {
+	private void compileCombined(FileList fileList, File targetFile, CoffeeScriptCompiler compiler, Minifier minifier) throws Throwable {
+
+		// System.out.println(fileList);
+
 		String compiledScript;
 		StringBuffer combinedScript = new StringBuffer();
 		for (File file : FileHelper.getCoffeeScriptFiles(fileList)) {
@@ -101,9 +115,8 @@ public class Compilation extends CompilationBase {
 			}
 		}
 
-		out.print("Compiling...");
+		out.println("Compiling...");
 		compiledScript = compiler.compile(combinedScript.toString());
-		out.println(" done.");
 
 		combinedScript = new StringBuffer();
 		for (File file : FileHelper.getJavaScriptFiles(fileList)) {
@@ -113,7 +126,20 @@ public class Compilation extends CompilationBase {
 				e.printStackTrace();
 			}
 		}
+		combinedScript.append(compiledScript);
+		compiledScript = minify(combinedScript.toString(), minifier);
 
-		FileIOHelper.writeFile(targetFile, combinedScript.toString() + compiledScript);
+		FileIOHelper.writeFile(targetFile, compiledScript);
 	}
+
+	private String minify(String source, Minifier minifier) throws Throwable {
+		if (minifier == null) {
+			return source;
+		} else {
+			out.println("Minifying...");
+			String code = minifier.minify(source);
+			return code;
+		}
+	}
+
 }
