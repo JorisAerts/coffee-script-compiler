@@ -15,6 +15,7 @@ To define dependencies in a CoffeeScript file to other CoffeeScript files or Jav
 
 <your code>
 ```
+If any circular dependency is detected, an Exception will be thrown.
 
 Goals:
 ------
