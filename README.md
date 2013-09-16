@@ -8,7 +8,7 @@ Compilation is achieved using [Rhino](https://developer.mozilla.org/en/docs/Rhin
 Usage:
 ------
 
-to define dependencies in a CoffeeScript file to other CoffeeScript files or JavaScript files, just add a special comment:
+To define dependencies in a CoffeeScript file to other CoffeeScript files or JavaScript files, just add a special comment:
 ```
 #= require "file.coffee"
 #= require "jquery.js"
