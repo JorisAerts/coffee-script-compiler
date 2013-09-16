@@ -15,6 +15,7 @@ import com.jorisaerts.cscompiler.log.LogStream;
 
 public class Compilation extends CompilationBase {
 
+	/** The PrintStream to which is traced. */
 	public PrintStream out = new LogStream();
 	final Class<CoffeeScriptCompiler> Compiler;
 
@@ -58,6 +59,7 @@ public class Compilation extends CompilationBase {
 		return fileList;
 	}
 
+	/** Start the compilation process. */
 	public void compile() {
 		long starttime = System.currentTimeMillis();
 		FileList fileList = resolveDependencies();
@@ -71,15 +73,18 @@ public class Compilation extends CompilationBase {
 			t.printStackTrace();
 		}
 		long totaltime = System.currentTimeMillis() - starttime;
+
 		out.println("Compilation done in " + totaltime / 1000.0 + " seconds.");
 	}
 
 	private void compile(CoffeeScriptCompiler compiler, FileList fileList) throws Throwable {
 		String compiledScript;
 		for (File file : FileHelper.getCoffeeScriptFiles(fileList)) {
+
 			out.print("Compiling '" + file + "'...");
 			compiledScript = compiler.compile(file);
 			out.println(" done.");
+
 			File targetFile = FileHelper.getJavaScriptFromCoffeeFile(file);
 			FileIOHelper.writeFile(targetFile, compiledScript);
 		}

@@ -6,8 +6,28 @@ import com.jorisaerts.cscompiler.dependencies.FileList;
 
 public class CompilationBase {
 
-	protected static String defaultCompilerClassName = "com.jorisaerts.cscompiler.compilers.RhinoCompiler";
+	protected final static String defaultCompilerClassName = "com.jorisaerts.cscompiler.compilers.RhinoCompiler";
+
 	private boolean combine = true;
+	private boolean sourceMap = true;
+	private boolean minify = true;
+
+	public boolean isSourceMap() {
+		return sourceMap;
+	}
+
+	public void setSourceMap(boolean sourceMap) {
+		this.sourceMap = sourceMap;
+	}
+
+	public boolean isMinify() {
+		return minify;
+	}
+
+	public void setMinify(boolean minify) {
+		this.minify = minify;
+	}
+
 	protected FileList inputFileList;
 	protected File outputDirectory;
 

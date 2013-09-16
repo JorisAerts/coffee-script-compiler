@@ -16,6 +16,7 @@ public class Main {
 	public static void compileAll(String[] args) throws Throwable {
 		File inputFile = new File(args[0]);
 		File outputDirectory = FileHelper.getDirectory(inputFile);
+
 		Compilation compilation = new Compilation(inputFile, outputDirectory);
 		compilation.out = System.out;
 		compilation.compile();
