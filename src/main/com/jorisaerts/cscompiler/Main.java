@@ -6,6 +6,7 @@ import java.security.InvalidParameterException;
 import com.jorisaerts.cscompiler.compilation.Compilation;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
 
+/** Entry point for command-line compilation. */
 public class Main {
 
 	public static void main(String[] args) throws Throwable {
