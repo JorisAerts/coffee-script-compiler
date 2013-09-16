@@ -1,2 +1,1 @@
-alert 'ok2'
-alert 'end'
+console.log "test 2"
