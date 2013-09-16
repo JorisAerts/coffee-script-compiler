@@ -12,7 +12,7 @@ Goals:
 - Compilation using the .jar package
 - Compilation as an ant-task
 
-TODO:
+Todo:
 ------
 - Improve the code :-)
 - Add Source Map support
