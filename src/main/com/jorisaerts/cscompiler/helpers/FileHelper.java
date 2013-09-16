@@ -7,7 +7,7 @@ import java.util.List;
 
 import com.jorisaerts.cscompiler.dependencies.FileList;
 
-public class FileHelper {
+public final class FileHelper {
 
 	public static List<File> getCoffeeFiles(String path) {
 		return getCoffeeFiles(new File(path));

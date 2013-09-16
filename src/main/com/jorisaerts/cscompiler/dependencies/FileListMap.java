@@ -8,7 +8,7 @@ import java.util.TreeMap;
 
 public class FileListMap implements Map<File, FileList> {
 
-	TreeMap<String, FileList> fileMap = new TreeMap<String, FileList>();
+	private final TreeMap<String, FileList> fileMap = new TreeMap<String, FileList>();
 
 	@Override
 	public int size() {
@@ -59,7 +59,7 @@ public class FileListMap implements Map<File, FileList> {
 
 	@Override
 	public Set<File> keySet() {
-		return null;
+		throw new RuntimeException("Not supported.");
 	}
 
 	@Override
@@ -69,7 +69,7 @@ public class FileListMap implements Map<File, FileList> {
 
 	@Override
 	public Set<java.util.Map.Entry<File, FileList>> entrySet() {
-		return null;
+		throw new RuntimeException("Not supported.");
 	}
 
 }

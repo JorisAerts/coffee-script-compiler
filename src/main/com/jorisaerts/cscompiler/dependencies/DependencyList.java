@@ -13,9 +13,9 @@ import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 @SuppressWarnings("serial")
 public class DependencyList extends FileList {
 
-	private static Pattern requirePattern = Pattern.compile("^\\#\\=\\s+require\\s+\"([\\w\\\\/\\\\.]+)\"", Pattern.MULTILINE);
+	private final static Pattern requirePattern = Pattern.compile("^\\#\\=\\s+require\\s+\"([\\w\\\\/\\\\.]+)\"", Pattern.MULTILINE);
 
-	private FileListMap dependencyMap = new FileListMap();
+	private final FileListMap dependencyMap = new FileListMap();
 
 	@Override
 	// override, so that each dependency is resolved

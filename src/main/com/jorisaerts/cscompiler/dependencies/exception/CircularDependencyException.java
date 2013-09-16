@@ -2,6 +2,7 @@ package com.jorisaerts.cscompiler.dependencies.exception;
 
 import java.io.File;
 
+@SuppressWarnings("serial")
 public class CircularDependencyException extends RuntimeException {
 
 	File sourceFile;

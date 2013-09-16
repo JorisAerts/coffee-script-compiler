@@ -12,10 +12,8 @@ import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 
 public class NativeCompiler extends CoffeeScriptCompiler {
 
-	private final static String COMPILER_FILENAME = "./coffee/coffee-script.js";
-
-	CompiledScript cscript;
-	ScriptEngine engine;
+	private final CompiledScript cscript;
+	private final ScriptEngine engine;
 
 	public NativeCompiler() throws Throwable {
 		ScriptEngineManager scriptEngineManager = new ScriptEngineManager();

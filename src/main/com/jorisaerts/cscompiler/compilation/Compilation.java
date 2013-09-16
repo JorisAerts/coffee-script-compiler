@@ -11,13 +11,13 @@ import com.jorisaerts.cscompiler.dependencies.DependencyList;
 import com.jorisaerts.cscompiler.dependencies.FileList;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
 import com.jorisaerts.cscompiler.helpers.FileIOHelper;
-import com.jorisaerts.cscompiler.log.LogStream;
+import com.jorisaerts.cscompiler.log.QuietLogStream;
 
 public class Compilation extends CompilationBase {
 
 	/** The PrintStream to which is traced. */
-	public PrintStream out = new LogStream();
-	final Class<CoffeeScriptCompiler> Compiler;
+	public PrintStream out = new QuietLogStream();
+	private final Class<CoffeeScriptCompiler> Compiler;
 
 	public Compilation(Class<CoffeeScriptCompiler> compiler, List<File> inputFileList) {
 		this.Compiler = compiler;

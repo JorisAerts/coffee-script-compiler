@@ -3,9 +3,9 @@ package com.jorisaerts.cscompiler.log;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-public class LogStream extends PrintStream {
+public final class QuietLogStream extends PrintStream {
 
-	public LogStream() {
+	public QuietLogStream() {
 		super(new ByteArrayOutputStream());
 	}
 

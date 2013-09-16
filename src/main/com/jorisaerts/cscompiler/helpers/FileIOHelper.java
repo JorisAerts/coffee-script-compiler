@@ -9,10 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 
-public class FileIOHelper {
-
-	private FileIOHelper() {
-	}
+public final class FileIOHelper {
 
 	public static Reader getFileReader(String filename) throws FileNotFoundException {
 		return getFileReader(new File(filename));
