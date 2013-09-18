@@ -8,7 +8,7 @@ public abstract class CoffeeScriptCompiler implements AutoCloseable {
 
 	protected static boolean init = false;
 
-	protected final static String COMPILER_FILENAME = "./coffee/coffee-script.js";
+	protected final static String COMPILER_FILENAME = "./js/coffee-script.js";
 
 	public abstract String compile(String coffeeScript) throws Throwable;
 

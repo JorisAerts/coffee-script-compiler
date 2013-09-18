@@ -10,7 +10,7 @@ import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 // TODO: minify using Java syntax!
 public class RhinoMinifier extends Minifier implements AutoCloseable {
 
-	private static String FILENAME = "./uglify/uglifyjs.js";
+	private static String FILENAME = "./js/uglifyjs.js";
 
 	Context cx;
 	Scriptable scope;
