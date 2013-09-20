@@ -18,11 +18,13 @@ If any circular dependency is detected, an Exception will be thrown.
 
 Goals:
 ------
-- Command-line compilation
-- Compilation using the .jar package
-- Compilation as an ant-task
+* Command-line compilation
+* Compilation using the .jar package
+* Compilation as an ant-task
 
 Todo:
 ------
-- Improve the code.   Concatenation of all scripts before compilation takes a very long time to compile. A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
-- Add Source Map support
+* Improve the code.   
+  * Concatenation of all scripts before compilation takes a very long time to compile.
+  * A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
+* Add Source Map support
