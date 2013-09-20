@@ -24,5 +24,5 @@ Goals:
 
 Todo:
 ------
-- Improve the code. Concatenation of all scripts before compilation takes a very long time to compile. A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
+- Improve the code.   Concatenation of all scripts before compilation takes a very long time to compile. A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
 - Add Source Map support
