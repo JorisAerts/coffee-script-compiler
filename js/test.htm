@@ -37,7 +37,7 @@ class extends test
 	test:(a...)=>
 
 </script>
-<script>var out = (function(){
+<script type="nada">var out = (function(){
 	
 	
 	var el = function(id) { return document.getElementById(id); },
@@ -47,15 +47,23 @@ class extends test
 		}),
 		coffeeReserveds = function(ret, words){
 			for (var i=0, size=words.length; i<size; i++){
-				ret[words[i]] = { rx: new RegExp("__" + words[i]), found:false }
+ 				ret[words[i]] = { rx: new RegExp("__" + words[i] + "(.*)?(\\,\\n)|$"), found:false }
 			}
 			return ret;
-		}({},["bind", "hasProp", "extend", "slice"]),
+		}({},["bind", "hasProp", "extends", "slice"]),
+		
 		processFragment = function(f, result){
-			for (var w in coffeeReserveds){
-				var r = coffeeReserveds[w];
-				r.found = !r.found && r.rx.test(f.code);
+			var r,m,w;
+			for (w in coffeeReserveds){
+				r = coffeeReserveds[w];
+				r.found = !r.found && f.code.match(r.rx);
+				if(r.rx.text(r.code)){
+					r.found = true;
+					m = f.code.match(r.rx);
+				}
+				
 			}
+			return coffeeReserveds;
 		}
 		;
 	
@@ -63,8 +71,11 @@ class extends test
 		f = test.fragments[i];
 		if(/__bind|__hasProp|__extend|__slice/.test(f.code)){
 			console.log(f);
-			processFragment(f,test);
-			var q = 1;
+			var cR = processFragment(f,test),
+				q = 1;
+				
+			console.log (cR);	
+			
 			if (/^\s*?;\s*?$/.test(test.fragments[i+1].code)){
 				q++;
 				if (/^\s*?var\s*?$/.test(test.fragments[i-1].code)){

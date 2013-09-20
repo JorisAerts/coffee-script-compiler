@@ -25,9 +25,10 @@ public class RhinoMinifier extends Minifier implements AutoCloseable {
 
 		scope = cx.initStandardObjects();
 
-		StringBuilder sb = new StringBuilder().append(FileIOHelper.readFile(FILENAME)).append("function minify(script){").append("var ast = UglifyJS.parse(script);").append("ast.figure_out_scope();")
-				.append("var compressor = UglifyJS.Compressor({ });").append("ast = ast.transform(compressor);").append("ast.compute_char_frequency();").append("ast.mangle_names();")
-				.append("return ast.print_to_string();").append("}");
+		StringBuilder sb = new StringBuilder().append(FileIOHelper.readFile(FILENAME))
+
+		.append("function minify(script){").append("var ast = UglifyJS.parse(script);").append("ast.figure_out_scope();").append("var compressor = UglifyJS.Compressor({ });")
+				.append("ast = ast.transform(compressor);").append("ast.compute_char_frequency();").append("ast.mangle_names();").append("return ast.print_to_string();").append("}");
 
 		// cx.evaluateReader(scope, FileIOHelper.getFileReader(FILENAME),
 		// "<cmd>", 1, null);
