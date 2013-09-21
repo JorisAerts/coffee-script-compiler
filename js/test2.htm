@@ -18,7 +18,7 @@
 			margin-bottom: 2em;
 			overflow:auto;
 		}
-		h2 {
+		h2 {
 			font-size: 120%;
 			margin-bottom: .2em;
 			margin-top: 1em;
@@ -37,70 +37,21 @@ class extends test
 	test:(a...)=>
 
 </script>
-<script type="nada">var out = (function(){
-	
+<script>var out = (function(){
 	
 	var el = function(id) { return document.getElementById(id); },
-		test = CoffeeScript.compile(el("script").text, { 
-			sourceMap: true, 
-			bare: true 
-		}),
-		coffeeReserveds = function(ret, words){
-			for (var i=0, size=words.length; i<size; i++){
- 				ret[words[i]] = { rx: new RegExp("__" + words[i] + "(.*)?(\\,\\n)|$"), found:false }
-			}
-			return ret;
-		}({},["bind", "hasProp", "extends", "slice"]),
-		
-		processFragment = function(f, result){
-			var r,m,w;
-			for (w in coffeeReserveds){
-				r = coffeeReserveds[w];
-				r.found = !r.found && f.code.match(r.rx);
-				if(r.rx.text(r.code)){
-					r.found = true;
-					m = f.code.match(r.rx);
-				}
-				
-			}
-			return coffeeReserveds;
-		}
-		;
+		result
+	;
 	
-	for (var f, i=0, size = test.fragments.length; i<size; i++){
-		f = test.fragments[i];
-		if(/__bind|__hasProp|__extend|__slice/.test(f.code)){
-			console.log(f);
-			var cR = processFragment(f,test),
-				q = 1;
-				
-			console.log (cR);	
-			
-			if (/^\s*?;\s*?$/.test(test.fragments[i+1].code)){
-				q++;
-				if (/^\s*?var\s*?$/.test(test.fragments[i-1].code)){
-					q++; i--;
-				}
-			}
-			test.fragments.splice(i, q);
-			break;
-		}
-	}
+	CSCompiler.add(el("script").text);
+	result = CSCompiler.compile();
 	
-	var code = "";
-	for (var f in test.fragments){
-		code += test.fragments[f].code; 
-	}
+	console.log(result)
 	
-	test.js = code;
-	
-	return test;
-
 })();
 
-console.log (out);
-document.getElementById("code").innerHTML = out.js;
-document.getElementById("sourcemap").innerHTML = out.v3SourceMap;
+//document.getElementById("code").innerHTML = out.js;
+//document.getElementById("sourcemap").innerHTML = out.v3SourceMap;
 
 
 </script>
