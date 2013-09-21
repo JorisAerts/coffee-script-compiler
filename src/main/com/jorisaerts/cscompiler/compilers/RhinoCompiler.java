@@ -25,13 +25,16 @@ public class RhinoCompiler extends CoffeeScriptCompiler {
 		cx.setGeneratingSource(false);
 
 		scope = cx.initStandardObjects();
-		cx.evaluateString(scope, getScript(), "coffee", 1, null);
 
-		NativeObject coffeeScriptObject = (NativeObject) scope.get("CSCompiler", scope);
-		addFunction = (Function) coffeeScriptObject.get("add", scope);
-		compileFunction = (Function) coffeeScriptObject.get("compile", scope);
+		cx.evaluateString(scope, getScript(), "compiler", 1, null);
+
+		Object coffeeScriptObject = scope.get("CSCompiler", scope);
+		NativeObject nativeCompiler = (NativeObject) coffeeScriptObject;
+		addFunction = (Function) nativeCompiler.get("add", scope);
+		compileFunction = (Function) nativeCompiler.get("compile", scope);
 	}
 
+	@Override
 	public void add(String coffeeScript) throws Throwable {
 		Object functionArgs[] = {};
 		((Function) addFunction).call(cx, scope, scope, functionArgs);
@@ -40,7 +43,8 @@ public class RhinoCompiler extends CoffeeScriptCompiler {
 	@Override
 	public List<CompilationResult> compile() {
 		Object functionArgs[] = {};
-		return processResult(((Function) addFunction).call(cx, scope, scope, functionArgs));
+		Object result = ((Function) addFunction).call(cx, scope, scope, functionArgs);
+		return processResult(result);
 	}
 
 	private List<CompilationResult> processResult(Object result) {
