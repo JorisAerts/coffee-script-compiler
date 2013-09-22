@@ -1,6 +1,6 @@
 package com.jorisaerts.cscompiler.compilers;
 
-import java.util.List;
+import java.io.File;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -10,7 +10,8 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 
-import com.jorisaerts.cscompiler.compilers.result.CompilationResult;
+import com.jorisaerts.cscompiler.compilers.exception.CompileException;
+import com.jorisaerts.cscompiler.compilers.result.CompilationResultList;
 
 public class NativeCompiler extends CoffeeScriptCompiler {
 
@@ -29,7 +30,7 @@ public class NativeCompiler extends CoffeeScriptCompiler {
 		cscript.eval(bindings);
 	}
 
-	public void add(String coffeeScript) throws Throwable {
+	public void add(String coffeeScript, File file) throws Throwable {
 		Invocable invocable = (Invocable) cscript.getEngine();
 		Object coffeeScriptObject = engine.get("CoffeeScript");
 		String compiledScript = (String) invocable.invokeMethod(coffeeScriptObject, "compile", coffeeScript);
@@ -37,7 +38,7 @@ public class NativeCompiler extends CoffeeScriptCompiler {
 	}
 
 	@Override
-	public List<CompilationResult> compile() {
+	public CompilationResultList compile() throws CompileException {
 		return null;
 	}
 

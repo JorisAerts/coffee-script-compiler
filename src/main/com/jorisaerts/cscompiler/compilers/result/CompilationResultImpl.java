@@ -22,4 +22,9 @@ public class CompilationResultImpl implements CompilationResult {
 		this.code = code;
 	}
 
+	@Override
+	public String toString() {
+		return new StringBuilder().append('{').append("code: ").append(getCode()).append("; source-map: ").append(getSourceMap().toString()).append('}').toString();
+	}
+
 }

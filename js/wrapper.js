@@ -29,11 +29,27 @@
 
 		Output, OutputScript, OutputJavaScript, OutputCoffeeScript,
 
-		rxJavaScript = /(function|\{|\}|\;|var)/g, rxCoffeeScript = /(class|\-\>|\=\>|extends)/g;
+		rxJavaScript = /(function|var)/g, rxCoffeeScript1 = /(class|extends|of|when|isnt)/g, rxCoffeeScript2 = /(\-\>|\=\>|^#)/g,
+
+		isUndef = function(obj) {
+			return typeof (obj) === "undefined";
+		},
+
+		trace = function() {
+			if (!isUndef(global.java) && !isUndef(java.lang) && !isUndef(java.lang.System)) {
+				return function(obj) {
+					java.lang.System.out.println("" + obj)
+				};
+			} else {
+				return function(obj) {
+					console.log(obj);
+				}
+			}
+		}();
 		
 		/** Output - renders the script according to the options */
 		Output = function Output(options) {
-			this.options = defaults({}, options || {});
+			this.options = defaults({}, options);
 			this.options.csHelpers = initCoffeeScriptHelpers();
 			this.contents = [];
 		};
@@ -41,18 +57,21 @@
 		    compile : function() {
 			    var result = [];
 			    for ( var i = 0, size = this.contents.length; i < size; i++) {
+				    trace("Compiling" + (this.contents[i].filename ? " " + this.contents[i].filename : "") + "...");
 				    result.push(this.contents[i].compile().result);
 			    }
-			    var ret = [], code;
+			    trace (result.join("\n"));
+			    var ret = [], code, nl = "\n\n";
 			    if (this.options.combine === true) {
-				    ret = minify(getHelpersDeclaration(this) + result.join("\n"), this.options);
+				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options);
 			    } else {
 				    ret = result;
 			    }
 			    return ret;
 		    },
-		    add : function(script) {
-			    this.contents.push(OutputScript.create(script, this.options));
+		    add : function(script, filename, type) {
+		    	trace("Adding" + (filename ? " " + filename : "") + "...");
+			    this.contents.push(OutputScript.create(script, filename, type, this.options));
 		    }
 		};
 		
@@ -62,42 +81,41 @@
 			this.code = script.code;
 			this.filename = script.filename;
 			this.sourceMap = {};
-			if (script.sourceMap) {
-				if (script.sourceMap.v1) {
-					this.sourceMap.v1 = script.sourceMap.v1;
-				}
-				if (script.sourceMap.v3) {
-					this.sourceMap.v1 = script.sourceMap.v3;
-				}
-			}
 		};
 		OutputScript.prototype = {
 			compile : function() {
 				var js = this._getJS();
-				this.result = this.options.combine === true ? js : minify(js, this.options);
+				if (this.options.combine === true) {
+					this.result = js;
+				} else {
+					this.result = result.code;
+					this.sourceMap = result.sourceMap;
+				}
 				return this;
 			}
 		};
 		
-		OutputScript.create = function(script, options) {
+		OutputScript.create = function(script, filename, type, options) {
 			script = new String(script);
-			var mC = script.match(rxCoffeeScript), mJs = script.match(rxJavaScript);
-			if (mC != null && mC.length > 1) {
-				return new OutputCoffeeScript(script, options);
+			var mC = script.match(rxCoffeeScript2), mJs = script.match(rxJavaScript);
+			if ( type == "javascript") {
+				return new OutputJavaScript(script, filename, options);
 			} else {
-				return new OutputJavaScript(script, options);
+				return new OutputCoffeeScript(script, filename, options);
 			}
 		};
 		
 		/** Individual JavaScript */
-		OutputJavaScript = function(script, options) {
+		OutputJavaScript = function(script, filename, options) {
 			OutputScript.apply(this, [ {
+			    filename : filename,
 			    code : script,
 			    sourceMap : {}
-			} ].concat(Array.prototype.slice.call(arguments, 1)));
+			} ].concat(Array.prototype.slice.call(arguments, 2)));
 		};
 		OutputJavaScript.prototype = {
 		    compile : function() {
+			    // trace(" -> JavaScript");
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
 		    _getJS : function() {
@@ -106,15 +124,17 @@
 		};
 		
 		/** Individual CoffeeScript */
-		OutputCoffeeScript = function(script, options) {
+		OutputCoffeeScript = function(script, filename, options) {
 			var coffeescript = CoffeeScript.compile(script, {
 			    sourceMap : true,
 			    bare : true
 			// use the bare option, we'll wrap it ourself
 			});
 			OutputScript.apply(this, [ {
-				code : script
-			} ].concat(Array.prototype.slice.call(arguments, 1)));
+			    filename : filename,
+			    code : script,
+			    sourceMap : {}
+			} ].concat(Array.prototype.slice.call(arguments, 2)));
 			this.helperOffsets = [];
 			this.sourceMap = {
 			    v1 : coffeescript.sourceMap,
@@ -126,6 +146,7 @@
 		};
 		OutputCoffeeScript.prototype = {
 		    compile : function() {
+			    // trace(" -> CoffeeScript");
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
 		    _getJS : function() {
@@ -143,6 +164,7 @@
 			    return result.join("");
 		    }
 		};
+		
 		/** Initialization function */
 		function init(options_n) {
 			options = defaults({}, options_n, defaultOptions);
@@ -222,9 +244,11 @@
 			obj = obj || {};
 			for ( var trg, p, i = 1, size = arguments.length; i < size; i++) {
 				trg = arguments[i];
-				for (p in trg) {
-					if (hasProp(trg, p) && typeof (obj[p]) === "undefined") {
-						obj[p] = trg[p];
+				if (!isUndef(trg)) {
+					for (p in trg) {
+						if (hasProp(trg, p) && isUndef(obj[p])) {
+							obj[p] = trg[p];
+						}
 					}
 				}
 			}
@@ -233,15 +257,12 @@
 		
 		// minify using UglifyJS
 		function minify(script, options) {
-			
+			trace("minifying...")
 			script = wrapScript(script, options);
-			
 			if (options.compress === false && options.mangleNames === false) {
-				return wrapScript(script, options);
+				return script;
 			}
-			
 			var stream, ast, compressor, sourceMap;
-			
 			sourceMap = UglifyJS.SourceMap({});
 			stream = UglifyJS.OutputStream({
 			    space_colon : false,
@@ -249,22 +270,17 @@
 			});
 			ast = UglifyJS.parse(script);
 			ast.figure_out_scope();
-			
 			if (options.compress === true) {
 				compressor = UglifyJS.Compressor({});
 				ast = ast.transform(compressor);
 			}
-			
 			if (options.mangleNames === true) {
 				ast.compute_char_frequency();
 				ast.mangle_names();
 			}
-			
 			ast.print(stream);
-			var code = stream.toString();
-			
 			return {
-			    code : code,
+			    code : stream.toString(),
 			    sourceMap : {
 				    v3 : sourceMap.toString()
 			    }
@@ -273,7 +289,7 @@
 		
 		// wrap a script into a self-executing anonymous function
 		function wrapScript(script, options) {
-			return options.bare === true ? script : "(function(){" + script + (options.compress === true ? "" : "\n") + "})()";
+			return options.bare === true ? script : "(function(){" + script + (options.compress === true ? "" : "\n") + "}).call(this)";
 		}
 		
 		(function hackTheCoffee() {
@@ -284,13 +300,14 @@
 		
 		// process a single coffee-script file
 		ret.add = function(script) {
-			return output.add(script);
+			return output.add.apply(output, arguments);
+			
 		};
 		
 		// wrap and minify all scripts into one
 		// combine all source maps into one
 		ret.compile = function() {
-			return output.compile();
+			return output.compile.apply(output, arguments);
 		};
 		
 		// initialization
@@ -300,5 +317,5 @@
 		return init();
 		
 	})({})
-	
+
 })(this)

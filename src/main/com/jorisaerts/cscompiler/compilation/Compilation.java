@@ -6,7 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.jorisaerts.cscompiler.compilers.CoffeeScriptCompiler;
-import com.jorisaerts.cscompiler.compilers.result.CompilationResult;
+import com.jorisaerts.cscompiler.compilers.exception.CompileException;
+import com.jorisaerts.cscompiler.compilers.result.CompilationResultList;
 import com.jorisaerts.cscompiler.dependencies.DependencyList;
 import com.jorisaerts.cscompiler.dependencies.FileList;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
@@ -63,18 +64,16 @@ public class Compilation extends CompilationBase {
 	 * 
 	 * @throws Throwable
 	 */
-	public void compile() throws Throwable {
+	public void compile() throws CompileException, Throwable {
 		long starttime = System.currentTimeMillis();
 		FileList fileList = resolveDependencies();
-
 		try (CoffeeScriptCompiler compiler = Compiler.newInstance()) {
-
-			for (File file : FileHelper.getCoffeeScriptFiles(fileList)) {
-				out.println("Compiling '" + file + "'...");
+			for (File file : fileList /* FileHelper.getCoffeeScriptFiles(fileList) */) {
 				compiler.add(file);
 			}
 
-			List<CompilationResult> lst = compiler.compile();
+			CompilationResultList lst = compiler.compile();
+			out.println(lst);
 
 		} catch (Throwable t) {
 			t.printStackTrace();

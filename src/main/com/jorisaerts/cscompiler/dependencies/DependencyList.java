@@ -2,7 +2,10 @@ package com.jorisaerts.cscompiler.dependencies;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,8 +29,32 @@ public class DependencyList extends FileList {
 		return true;
 	}
 
+	private static File resolvePath(File file) {
+		List<String> path = new ArrayList<String>();
+		String absolutePath = file.getAbsolutePath();
+		path.addAll(Arrays.asList(absolutePath.split("\\/")));
+		for (int i = path.size() - 1; i > 0; i--) {
+			String part = path.get(i);
+			if (part.equals(".")) {
+				path.remove(i);
+			} else if (part.equals("..")) {
+				if (path.size() > 1) {
+					path.remove(i);
+					path.remove(--i);
+				}
+			}
+		}
+		String result = absolutePath.startsWith("/") ? "/" : "";
+		for (String part : path) {
+			result += part + "/";
+		}
+		file = new File(result.substring(0, result.length() - 1));
+		return file;
+	}
+
 	@Override
 	public boolean add(File file) {
+		file = resolvePath(file);
 		if (!file.exists()) {
 			return false;
 		}
