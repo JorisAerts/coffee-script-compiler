@@ -12,6 +12,7 @@ import org.mozilla.javascript.ScriptableObject;
 import com.jorisaerts.cscompiler.compilers.exception.CompileException;
 import com.jorisaerts.cscompiler.compilers.result.CompilationResultImpl;
 import com.jorisaerts.cscompiler.compilers.result.CompilationResultList;
+import com.jorisaerts.cscompiler.compilers.result.SourceMapImpl;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
 
 public class RhinoCompiler extends CoffeeScriptCompiler {
@@ -58,8 +59,17 @@ public class RhinoCompiler extends CoffeeScriptCompiler {
 	private CompilationResultList processResult(Object result) {
 		CompilationResultList resultList = new CompilationResultList();
 		CompilationResultImpl impl = new CompilationResultImpl();
-		impl.setCode(Context.toString(result));
+
+		NativeObject compiledObject = (NativeObject) result;
+		impl.setCode(Context.toString(compiledObject.get("code")));
+
+		NativeObject sourceMap = (NativeObject) compiledObject.get("sourceMap");
+		SourceMapImpl smi = (SourceMapImpl) impl.getSourceMap();
+		smi.setV1(Context.toString(sourceMap.get("v1")));
+		smi.setV3(Context.toString(sourceMap.get("v3")));
+
 		resultList.add(impl);
+		System.out.println(resultList);
 		return resultList;
 	}
 

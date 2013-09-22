@@ -6,7 +6,8 @@
 	<script src="wrapper.js"></script>
 	<style><!--
 		body {
-			background: #ccc;
+			font-family: Trebuchet MS,Liberation Sans,DejaVu Sans,sans-serif;
+    		background: #333;
 			padding: 2.5em;
 			font-size: 12px;
 		}
@@ -14,28 +15,414 @@
 			background: #fff;
 			border: 4px solid #ccc;
 			border-radius: .5em;
-			box-shadow: 0 0 2.5em rgba(255,255,255, .7);
+			box-shadow: 0 0 1.5em rgba(255,255,255, .4);
 			padding: .5em;
 			margin-bottom: 2em;
 			overflow:auto;
+			white-space: pre-wrap;
 		}
 		h2 {
-			font-size: 120%;
-			margin-bottom: .2em;
+			color: #eee;
+    		font-size: 205%;
+			margin-bottom: 0;
 			margin-top: 1em;
+			padding:0;
 		}
 	--></style>
 </head>
 <body>
+	<h2>Code</h2>
 	<pre id="code"></pre>
 	<h2>Source Map</h2>
 	<pre id="sourcemap"></pre>
 </body>
-<script id="script" type="text/other">
+<script id="script1" type="text/other">
 
 class extends test
 	constructor:->
 	test:(a...)=>
+
+</script>
+<script id="script2" type="text/other">
+
+#= require "vendor/jquery.coffee"
+#= require "vendor/jquery.tablesorter.js"
+#= require "vendor/underscore.coffee"
+#= require "vendor/log4javascript.js"
+
+#= require "framework/Api.coffee"
+#= require "framework/Utils.coffee"
+
+###
+# Library functions #
+###
+
+###
+## Module system ##
+
+A simple module system for coffee script.
+
+Usage:
+  Module 'Planet', 'Mars'
+
+  class Planet.Mars.Alien extends Grey
+    constructor: (@hasFTL) ->
+
+  or
+
+  class Module('Planet','Mars').Alien extends Grey
+###
+
+@Module = (names...) ->
+  ns = @
+  for name in names when name?
+    ns = (ns[name] = ns[name] or {})
+  ns
+
+class @ElementRenderer
+
+  constructor: (@model) ->
+    @formatter = new ElementFormatter
+
+  _formType: (e) ->
+    if e then jQuery(e)[0].tagName else null
+
+  _format: (element) ->
+    log.debug element
+    value = @_elementValue(element)
+    type = element.type
+    @_formatType value, type
+
+  _formatType: (value, type) ->
+    @formatter.format value, type
+
+  _renderInput: (element) ->
+    switch element.type
+      when 'Boolean'
+        jQuery(element.element).prop 'checked', @_elementValue(element)
+      when 'Integer', 'Decimal'
+        # Do NOT format integers & decimals on INPUT-fields...
+        jQuery(element.element).val @_elementValue(element)
+      else
+        jQuery(element.element).val @_format element
+
+  _renderTextArea: (element) ->
+    jQuery(element.element).text @_format element
+
+  _renderSelect: (element) ->
+    return if not @_elementValue( element )
+    switch element.type
+      when "Domain" then @_renderDomain element
+
+  _renderDomain: (element) ->
+    log.debug element
+    value = @_elementValue( element )
+    jQuery(element.element).val value
+
+  _renderEntity: (element) ->
+    object = @_elementValue(element)
+    value = if object? then object['ref'] else ""
+    jQuery(element.element).val value
+
+  _renderTable: (element) ->
+    renderer = new TableRenderer element
+    renderer.clear()
+    value = @_elementValue(element)
+    prefix = ""
+    inheritance = jQuery(element.element).attr 'mms-inheritance'
+    if 'true' is inheritance
+      prefix = "/#{Utils.uppercaseFirstLetter( jQuery(element.element).attr 'mms-entity' )}"
+
+    number_rows = value?.length
+    return if not number_rows
+    types = ( element.children[column_index].type for column_index in [0...element.children.length] )
+    empty = true
+    for row_index in [0...number_rows]
+      row = []
+      for column_index in [0...element.children.length]
+        child = element.children[column_index]
+        type = child.type
+        text = @_elementValue(child, prefix)[row_index]
+        row.push @_formatType text, type
+      if not @_isEmptyRow row
+        model = Utils.lowercaseFirstLetter( @_elementModel( child )[row_index] )
+        entity = Utils.lowercaseFirstLetter( @_elementEntity( child )[row_index] )
+        id = row[0]
+        row = row[1..]
+        renderer.appendRow( row, types, id, model, entity )
+        empty = false
+    if not empty
+      renderer.updateSortable()
+      renderer.setSortable()
+      renderer.setHover()
+
+  _isEmptyRow: (row) ->
+    return true if row.length is 0
+    for e in row
+      return false if not _.isEmpty e
+    return true
+
+  _elementModel: (element) ->
+    model = @model.getValue "#{@_elementRoot(element)}/_model"
+
+  _elementEntity: (element) ->
+    entity = @model.getValue "#{@_elementRoot(element)}/_entity"
+
+  _elementRoot: (element) ->
+    "#{(element.xpathFull.split /\[\]/)[0]}[]"
+
+  _elementValue: (element, prefix="") ->
+    xpath = ( element.xpathFull.split /\[\]/ ).join("[]#{prefix}")
+    value = @model.getValue xpath
+    value
+
+  render: (element) ->
+    formType = @_formType element.element
+    switch formType
+      when 'TABLE' then @_renderTable element
+      when 'TEXTAREA' then @_renderTextArea element
+      when 'SELECT' then @_renderSelect element
+      when 'INPUT'
+        if jQuery(element.element).hasClass("mms-entity")
+          @_renderEntity element
+        else
+          @_renderInput element
+      when 'DIV' then @_renderEntity element
+      else
+        alert "Unsupported form type #{formType}."
+
+
+class @TableRenderer
+  constructor: (@table) ->
+    log.trace "### TableRenderer"
+    log.trace @table
+    @rowIndex = 0
+
+  clear: ->
+    jQuery(@table.element).find("tr:not(.ui-widget-header)").remove()
+    jQuery(@table.element).removeClass("tablesorter")
+
+  appendRow: (row, types, id, model = "", entity = "") ->
+    tr = "<tr mms-id=\"#{id}\" mms-xpath=\"#{@table.xpathFull}[#{@rowIndex}]\" mms-model=\"#{model}\" mms-entity=\"#{entity}\">"
+    for column,i in row
+      tr += "<td class=\"mms-type-#{types[i+1]}\">#{column}</td>"
+    tr += "</tr>"
+    jQuery(@table.element).find("tbody").append tr
+    @rowIndex++
+
+  setSortable: ->
+    isSortInventory = jQuery(@table.element).parents("[mms-widget=sort-inventory]")
+    if not isSortInventory
+      jQuery(@table.element).addClass("tablesorter")
+    jQuery(@table.element).tablesorter()
+
+  setHover: ->
+    Utils.setHover jQuery(@table.element)
+
+  updateSortable: ->
+    return if jQuery(@table.element).find("tr:first-child").length is 0
+    jQuery(@table.element).trigger("update")
+    clearTimeout @table.sortTimer
+    @table.sortTimer = Utils.delay 100, =>
+      delete @table.sortTimer
+      try
+        sortList = @_buildSortList()
+        jQuery(@table.element).trigger("sorton", [sortList] )
+      catch e
+
+  _buildSortList: ->
+    sortList = []
+    jQuery(@table.element).find("th").each (index, el) =>
+      order = jQuery(el).attr('mms-sort-order')
+      position = jQuery(el).attr('mms-sort-position')
+      sortField = jQuery(el).parents("[mms-widget=sort-inventory]").attr('mms-sortField')
+      if(sortField)
+        if(sortField is jQuery(el).attr('id'))
+          position = 1
+        else
+          position = parseInt(jQuery(el).attr('mms-sort-position')) + 1
+      sortList.push { order: order, position: position, index: index }
+    sortList.
+      filter( (el) -> el.order isnt undefined ).
+      sort( (a,b) -> a.position - b.position ).
+      map( (el) -> [el.index, if el.order is "Ascending" then 0 else 1])
+
+
+class @ElementFormatter
+  format: (value, type) ->
+    log.debug "format '#{value}' as #{type}"
+    return "" if null is value or undefined is value
+    switch type
+      when 'Decimal' then @_separateThousands (@_formatDecimal value)
+      when 'Integer' then @_separateThousands "#{value}"
+      when 'Boolean' then "#{value}"
+      when 'Date' then @_formatDate value
+      when 'TimeStamp'then @_formatTimeStamp value
+      else
+        if value then "#{value}" else ""
+
+  _formatTimeStamp: (value) ->
+    if(/^(\d{4})-([0-1]{1}[0-9]{1})-([0-3]{1}[0-9]{1}) (\d{2}:\d{2}:\d{2}\.\d{3})/.test(value))
+      parts = value.split " "
+      "#{@_formatDate(parts[0])} #{parts[1]}"
+    else ""
+
+
+  _formatDate: (value) ->
+    if(/^(\d{4})-([0-1]{1}[0-9]{1})-([0-3]{1}[0-9]{1})/.test(value))
+      value.replace /^(\d{4})-([0-1]{1}[0-9]{1})-([0-3]{1}[0-9]{1})/, (match, y, m, d) ->
+        [d,m,y].join("-")
+    else ""
+
+  _separateThousands: (value) ->
+    parts = value.replace(/\,/,"").split(".",2)
+    rx = /(-?\d+)(\d{3})/
+    parts[0] = parts[0].replace(rx, "$1,$2") while (rx.test(parts[0]))
+    parts.join(".")
+
+  _formatDecimal: (value) ->
+    if _.isString value
+      value = parseFloat value
+    value?.toFixed 2
+
+
+class @ElementChangeListener
+
+  constructor: () ->
+
+  _formType: (element) ->
+    if element then jQuery(element.element)[0].tagName else null
+
+  addListener: (element, cb) ->
+    log.debug "Add listener for #{element} #{element.type}"
+    if @_formType(element) in [ "INPUT", "SELECT", "TEXTAREA" ]
+      jQuery(element.element).change (event) =>
+        cb element
+
+    if @_formType(element) in [ "INPUT" ]
+      log.debug "Add keypress listener."
+      jQuery(element.element).keypress (event) =>
+        if event.which is 13
+          event.preventDefault()
+      jQuery(element.element).keyup (event) =>
+        if event.which is 13
+          cb element
+
+class Logger
+  constructor: ->
+    @logger = log4javascript.getDefaultLogger()
+    @enabled = false
+
+  enableIfConfigured: ->
+    @enable sessionState.getAttribute "logging"
+
+  enable: (@enabled) ->
+
+  trace: (args...) ->
+    return unless @enabled
+    @logger.trace args...
+
+  debug: (args...) ->
+    return unless @enabled
+    @logger.debug args...
+
+  info: (args...) ->
+    return unless @enabled
+    @logger.info args...
+
+  warn: (args...) ->
+    return unless @enabled
+    @logger.warn args...
+
+  error: (args...) ->
+    return unless @enabled
+    @logger.error args...
+
+  fatal: (args...) ->
+    return unless @enabled
+    @logger.fatal args...
+
+@log = new Logger()
+
+class Hotkeys
+
+  keys:
+    27: 'escape'
+    13: 'return'
+
+    37: 'left'
+    38: 'up'
+    39: 'right'
+    40: 'down'
+
+    46: 'delete'
+
+
+  constructor: ->
+    log.debug "Enabling hotkeys"
+    @handlers = []
+    jQuery(document).keydown (event) => @_handleKeypress event
+
+  _handleKeypress: (event) ->
+
+    code = @keys[event.which]
+    if @handlers[code]?
+      event.preventDefault()
+      handlers = @handlers[code]
+      handler = handlers[handlers.length-1]
+      handler.call event
+      false
+
+  register: (code, action) ->
+    log.debug " -> register"
+    if not @handlers[code]?
+      @handlers[code] = []
+    @handlers[code].push action
+
+  deregister: (code) ->
+    log.debug " -> deregister"
+    @handlers[code]?.pop()
+
+@Hotkeys = new Hotkeys
+
+
+class Resizer
+
+  constructor: ->
+    @stack = []
+    @handlers = {}
+    jQuery(window).on 'resize', (event) => @_handleResize(event)
+
+  register: (action) ->
+    @stack.push action
+
+  deregister: ->
+    @stack.pop()
+
+  add: (name, action) ->
+    if not @handlers[name]?
+      @handlers[name] = action
+
+  remove: (name) ->
+    if @handlers[name]?
+      delete @handlers[name]
+
+  _handleResize: (event) ->
+    if @stack.length > 0
+      handler = @stack[@stack.length-1]
+      handler.call event
+    for handler of @handlers
+      @handlers[handler].call event
+
+@Resizer = new Resizer
+
+# Utils we bold onto primitive objects
+
+# Array Remove - Based upon code By John Resig (MIT Licensed)
+Array.prototype.remove = (from, to) ->
+  rest = @.slice( (to or from) + 1 or @.length)
+  @.length = if ( from < 0 ) then @.length + from else from
+  @.push.apply @, rest
 
 </script>
 <script>var out = (function(){
@@ -44,15 +431,20 @@ class extends test
 		result
 	;
 	
-	CSCompiler.add(el("script").text);
-	result = CSCompiler.compile();
-	
-	console.log(result);
+	CSCompiler.add(el("script1").text);
+	CSCompiler.add(el("script2").text);
+	return CSCompiler.compile();
 	
 })();
 
-//document.getElementById("code").innerHTML = out.js;
-//document.getElementById("sourcemap").innerHTML = out.v3SourceMap;
+document.getElementById("code").innerHTML = out.code;
+if(out.sourceMap){
+	if(out.sourceMap.v3){
+		document.getElementById("sourcemap").innerHTML = out.sourceMap.v3;
+	}else if(out.sourceMap.v1){
+		document.getElementById("sourcemap").innerHTML = out.sourceMap.v1;
+	}
+}
 
 
 </script>

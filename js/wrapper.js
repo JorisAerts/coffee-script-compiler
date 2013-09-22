@@ -60,8 +60,7 @@
 				    trace("Compiling" + (this.contents[i].filename ? " " + this.contents[i].filename : "") + "...");
 				    result.push(this.contents[i].compile().result);
 			    }
-			    trace (result.join("\n"));
-			    var ret = [], code, nl = "\n\n";
+			    var ret = [], code, nl = "\n";
 			    if (this.options.combine === true) {
 				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options);
 			    } else {
@@ -70,7 +69,7 @@
 			    return ret;
 		    },
 		    add : function(script, filename, type) {
-		    	trace("Adding" + (filename ? " " + filename : "") + "...");
+			    trace("Adding" + (filename ? " " + filename : "") + "...");
 			    this.contents.push(OutputScript.create(script, filename, type, this.options));
 		    }
 		};
@@ -98,7 +97,7 @@
 		OutputScript.create = function(script, filename, type, options) {
 			script = new String(script);
 			var mC = script.match(rxCoffeeScript2), mJs = script.match(rxJavaScript);
-			if ( type == "javascript") {
+			if (type == "javascript") {
 				return new OutputJavaScript(script, filename, options);
 			} else {
 				return new OutputCoffeeScript(script, filename, options);
@@ -115,7 +114,6 @@
 		};
 		OutputJavaScript.prototype = {
 		    compile : function() {
-			    // trace(" -> JavaScript");
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
 		    _getJS : function() {
@@ -146,7 +144,6 @@
 		};
 		OutputCoffeeScript.prototype = {
 		    compile : function() {
-			    // trace(" -> CoffeeScript");
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
 		    _getJS : function() {
@@ -193,7 +190,7 @@
 					result.push("__" + r + "=" + helper.code);
 				}
 			}
-			if (result.length == 0) {
+			if (result.length === 0) {
 				return "";
 			}
 			return "var " + result.join(",") + ";";
@@ -204,9 +201,9 @@
 			for (w in result.options.csHelpers) {
 				r = result.options.csHelpers[w];
 				if (!r.found && r.rx.test(f.code)) {
-					r.found = true;
 					m = f.code.match(r.rx);
-					if (m.length) {
+					if (m.length > 0 && !isUndef(m[1])) {
+						r.found = true;
 						r.code = m[1];
 					}
 				}
@@ -224,6 +221,8 @@
 						q++;
 						if (/^\s*?var\s*?$/.test(script.fragments[i - 1].code)) {
 							q++;
+							i--;
+						} else if (/^\s*?\,\s*?$/.test(script.fragments[i - 1].code)) {
 							i--;
 						}
 					}
@@ -257,28 +256,41 @@
 		
 		// minify using UglifyJS
 		function minify(script, options) {
-			trace("minifying...")
+			trace("Minifying...")
 			script = wrapScript(script, options);
+			
 			if (options.compress === false && options.mangleNames === false) {
 				return script;
 			}
+			
 			var stream, ast, compressor, sourceMap;
 			sourceMap = UglifyJS.SourceMap({});
 			stream = UglifyJS.OutputStream({
 			    space_colon : false,
 			    source_map : sourceMap
 			});
+			
+			trace(" -> Parsing...");
 			ast = UglifyJS.parse(script);
+			
+			trace(" -> Figuring out the scope...");
 			ast.figure_out_scope();
+			
 			if (options.compress === true) {
+				trace(" -> Compressing...");
 				compressor = UglifyJS.Compressor({});
 				ast = ast.transform(compressor);
 			}
+			
 			if (options.mangleNames === true) {
+				trace(" -> Mangling names...");
 				ast.compute_char_frequency();
 				ast.mangle_names();
 			}
+			
+			trace(" -> Finalizing...");
 			ast.print(stream);
+			
 			return {
 			    code : stream.toString(),
 			    sourceMap : {

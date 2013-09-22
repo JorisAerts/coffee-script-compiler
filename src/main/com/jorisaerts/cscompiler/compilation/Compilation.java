@@ -73,7 +73,7 @@ public class Compilation extends CompilationBase {
 			}
 
 			CompilationResultList lst = compiler.compile();
-			out.println(lst);
+			// out.println(lst);
 
 		} catch (Throwable t) {
 			t.printStackTrace();
