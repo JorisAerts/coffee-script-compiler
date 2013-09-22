@@ -1,11 +1,9 @@
-CoffeeScript Compiler
-=====================
+# CoffeeScript Compiler
 
 A CoffeeScript compiler for Java, without [node.js](http://nodejs.org/) dependency, using the browser version of CoffeeScript.  
 Compilation is achieved using [Rhino](https://developer.mozilla.org/en/docs/Rhino), or using the native [javax.script](http://docs.oracle.com/javase/7/docs/api/index.html?javax/script/package-summary.html) package.
 
-Usage:
-------
+## Usage:
 
 To define dependencies in a CoffeeScript file to other CoffeeScript files or JavaScript files, just add a special comment:
 ```
@@ -16,15 +14,16 @@ To define dependencies in a CoffeeScript file to other CoffeeScript files or Jav
 ```
 If any circular dependency is detected, an Exception will be thrown.
 
-Goals:
-------
+## Goals:
 * Command-line compilation
 * Compilation using the .jar package
 * Compilation as an ant-task
 
-Todo:
-------
+## Todo:
 * Improve the code.   
   * Concatenation of all scripts before compilation takes a very long time to compile.
   * A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
 * Add Source Map support
+  * Current Source Maps are wrong
+  * It should support input-sourcemaps
+  * It should be possible to edit generated sourcemaps, so that compiled scripts can still be modified
