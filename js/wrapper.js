@@ -272,8 +272,6 @@
 			
 			trace(" -> Parsing...");
 			ast = UglifyJS.parse(script);
-			
-			trace(" -> Figuring out the scope...");
 			ast.figure_out_scope();
 			
 			if (options.compress === true) {
