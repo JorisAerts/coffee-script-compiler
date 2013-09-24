@@ -12,7 +12,7 @@ To define dependencies in a CoffeeScript file to other CoffeeScript files or Jav
 
 <your code>
 ```
-If any circular dependency is detected, an Exception will be thrown.
+If any circular dependency is detected, an CircularDependencyException will be thrown.
 
 ## Goals:
 * Command-line compilation
