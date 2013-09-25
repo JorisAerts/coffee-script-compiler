@@ -67,21 +67,24 @@ public class Compilation extends CompilationBase {
 	public void compile() throws CompileException, Throwable {
 		long starttime = System.currentTimeMillis();
 		FileList fileList = resolveDependencies();
+		CompilationResultList lst = null;
+		
 		try (CoffeeScriptCompiler compiler = Compiler.newInstance()) {
 			for (File file : fileList /* FileHelper.getCoffeeScriptFiles(fileList) */) {
 				compiler.add(file);
 			}
 
-			CompilationResultList lst = compiler.compile();
-			// out.println(lst);
-
+			lst = compiler.compile();
+			
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 
 		long totaltime = System.currentTimeMillis() - starttime;
-
 		out.println("Compilation done in " + totaltime / 1000.0 + " seconds.");
+		
+		System.out.println(lst);
+		
 	}
 
 }

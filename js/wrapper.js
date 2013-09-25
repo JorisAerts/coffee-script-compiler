@@ -28,7 +28,7 @@
 		}, coffeeScriptHelpers = {},
 
 		Output, OutputScript, OutputJavaScript, OutputCoffeeScript,
-
+		
 		rxJavaScript = /(function|var)/g, rxCoffeeScript1 = /(class|extends|of|when|isnt)/g, rxCoffeeScript2 = /(\-\>|\=\>|^#)/g,
 
 		isUndef = function(obj) {
@@ -63,6 +63,9 @@
 			    var ret = [], code, nl = "\n";
 			    if (this.options.combine === true) {
 				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options);
+				    
+				    //TODO: add the sourceMaps...
+				    
 			    } else {
 				    ret = result;
 			    }
@@ -123,7 +126,7 @@
 		
 		/** Individual CoffeeScript */
 		OutputCoffeeScript = function(script, filename, options) {
-			var coffeescript = CoffeeScript.compile(script, {
+			this[0] = CoffeeScript.compile(script, {
 			    sourceMap : true,
 			    bare : true
 			// use the bare option, we'll wrap it ourself
@@ -135,22 +138,26 @@
 			} ].concat(Array.prototype.slice.call(arguments, 2)));
 			this.helperOffsets = [];
 			this.sourceMap = {
-			    v1 : coffeescript.sourceMap,
-			    v3 : coffeescript.v3SourceMap
+			    v1 : this[0].sourceMap,
+			    v3 : this[0].v3SourceMap
 			};
-			this.fragments = coffeescript.fragments;
-			this.js = coffeescript.js;
+			this.js = this[0].js;
 			extractCoffeeScriptHelpers(this);
 		};
 		OutputCoffeeScript.prototype = {
 		    compile : function() {
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
+		    getSourceMap: function(){
+		    	if (this.options.jscombine === false) {
+				    return this[0].v3SourceMap;
+			    }
+		    },
 		    _getJS : function() {
 			    if (this.options.jscombine === false) {
 				    return this.js;
 			    }
-			    var fragments = [].concat(this.fragments), result = [];
+			    var fragments = [].concat(this[0].fragments), result = [];
 			    for ( var offset, i = 0, size = this.helperOffsets.length; i < size; i++) {
 				    offset = this.helperOffsets[i];
 				    fragments.splice(offset.index, offset.count);

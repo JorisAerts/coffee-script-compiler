@@ -69,7 +69,6 @@ public class RhinoCompiler extends CoffeeScriptCompiler {
 		smi.setV3(Context.toString(sourceMap.get("v3")));
 
 		resultList.add(impl);
-		System.out.println(resultList);
 		return resultList;
 	}
 
