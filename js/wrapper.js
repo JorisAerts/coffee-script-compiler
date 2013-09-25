@@ -19,7 +19,8 @@
 	global.MOZ_SourceMap = sourceMap;
 	global.CSCompiler = (function(ret) {
 		
-		var options = {}, output = [], defaultOptions = {
+		var undefined,
+			options = {}, output = [], defaultOptions = {
 		    bare : false,
 		    combine : true,
 		    compress : true,
@@ -28,7 +29,7 @@
 		}, coffeeScriptHelpers = {},
 
 		Output, OutputScript, OutputJavaScript, OutputCoffeeScript,
-		
+
 		rxJavaScript = /(function|var)/g, rxCoffeeScript1 = /(class|extends|of|when|isnt)/g, rxCoffeeScript2 = /(\-\>|\=\>|^#)/g,
 
 		isUndef = function(obj) {
@@ -64,7 +65,7 @@
 			    if (this.options.combine === true) {
 				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options);
 				    
-				    //TODO: add the sourceMaps...
+				    // TODO: add the sourceMaps...
 				    
 			    } else {
 				    ret = result;
@@ -128,8 +129,8 @@
 		OutputCoffeeScript = function(script, filename, options) {
 			this[0] = CoffeeScript.compile(script, {
 			    sourceMap : true,
-			    bare : true
-			// use the bare option, we'll wrap it ourself
+			    // use the bare option or wrap it ourself
+			    bare : options.combine === true || options.bare === true
 			});
 			OutputScript.apply(this, [ {
 			    filename : filename,
@@ -137,24 +138,18 @@
 			    sourceMap : {}
 			} ].concat(Array.prototype.slice.call(arguments, 2)));
 			this.helperOffsets = [];
-			this.sourceMap = {
-			    v1 : this[0].sourceMap,
-			    v3 : this[0].v3SourceMap
-			};
 			this.js = this[0].js;
+			// create a new source map
+			processSourceMap(this);
+			// extract coffeescript helper functions from the output and the sourcemap
 			extractCoffeeScriptHelpers(this);
 		};
 		OutputCoffeeScript.prototype = {
 		    compile : function() {
 			    return OutputScript.prototype.compile.apply(this, arguments);
 		    },
-		    getSourceMap: function(){
-		    	if (this.options.jscombine === false) {
-				    return this[0].v3SourceMap;
-			    }
-		    },
 		    _getJS : function() {
-			    if (this.options.jscombine === false) {
+			    if (this.options.combine === false) {
 				    return this.js;
 			    }
 			    var fragments = [].concat(this[0].fragments), result = [];
@@ -181,7 +176,7 @@
 			return function(ret, words) {
 				for ( var i = 0, size = words.length; i < size; i++) {
 					ret[words[i]] = {
-					    rx : new RegExp("__" + words[i] + "\\s+\\=\\s+(.*)?(\\,\\n)|$"),
+					    rx : new RegExp("__" + words[i] + "\\s+\\=\\s+(.*)?((\\,\\n)|$)"),
 					    found : false
 					}
 				}
@@ -203,13 +198,26 @@
 			return "var " + result.join(",") + ";";
 		}
 		
+		function processSourceMap(script) {
+			script[1] = new sourceMap.SourceMapConsumer(script[0].v3SourceMap);
+			script[1].source = script.filename;
+			script[1].filename = script[1].source ? script[1].source + ".map" : undefined;
+			script[1].sourceContent = script.code;
+			// the stripping of the code comes later when processing the helpers
+		}
+		
 		function processFragment(f, result) {
 			var r, m, w;
 			for (w in result.options.csHelpers) {
 				r = result.options.csHelpers[w];
-				if (!r.found && r.rx.test(f.code)) {
+				if (/* !r.found && */ r.rx.test(f.code)) {
 					m = f.code.match(r.rx);
 					if (m.length > 0 && !isUndef(m[1])) {
+						
+						// cut off fragment.start + m.index from the sourcemap
+						// until m[0].length
+						// using replaceRight 
+						
 						r.found = true;
 						r.code = m[1];
 					}
@@ -219,17 +227,21 @@
 		}
 		
 		function extractCoffeeScriptHelpers(script) {
-			for ( var f, i = 0, size = script.fragments.length; i < size; i++) {
-				f = script.fragments[i];
+			for ( var f, i = 0, size = script[0].fragments.length; i < size; i++) {
+				f = script[0].fragments[i];
 				if (/__bind|__hasProp|__extend|__slice/.test(f.code)) {
 					processFragment(f, script);
 					var q = 1;
-					if (/^\s*?;\s*?$/.test(script.fragments[i + 1].code)) {
+					
+					trace(script);
+					
+					// todo cut away from the sourceMap
+					if (/^\s*?;\s*?$/.test(script[0].fragments[i + 1].code)) {
 						q++;
-						if (/^\s*?var\s*?$/.test(script.fragments[i - 1].code)) {
+						if (/^\s*?var\s*?$/.test(script[0].fragments[i - 1].code)) {
 							q++;
 							i--;
-						} else if (/^\s*?\,\s*?$/.test(script.fragments[i - 1].code)) {
+						} else if (/^\s*?\,\s*?$/.test(script[0].fragments[i - 1].code)) {
 							i--;
 						}
 					}
@@ -237,6 +249,7 @@
 					    index : i,
 					    count : q
 					});
+					// stop here, we've found what we were looking for
 					break;
 				}
 			}
@@ -333,6 +346,6 @@
 		// return the object
 		return init();
 		
-	})({})
-
+	})({});
+	
 })(this)
