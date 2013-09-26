@@ -25,5 +25,5 @@ If any circular dependency is detected, an CircularDependencyException will be t
   * A compiler/minifier wrapper needs to be written so that every file can still be compiled/minified separatley, but the CoffeeScript helper functions should be removed and added at the end, so that there is no duplicate code.
 * Add Source Map support
   * Current Source Maps are wrong
-  * It should support input-sourcemaps
-  * It should be possible to edit generated sourcemaps, so that compiled scripts can still be modified
+  * Support input-sourcemaps
+  * Edit generated sourcemaps, so that compiled scripts can still be modified
