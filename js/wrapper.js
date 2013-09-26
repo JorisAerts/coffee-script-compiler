@@ -19,8 +19,7 @@
 	global.MOZ_SourceMap = sourceMap;
 	global.CSCompiler = (function(ret) {
 		
-		var undefined,
-			options = {}, output = [], defaultOptions = {
+		var undefined, options = {}, output = [], defaultOptions = {
 		    bare : false,
 		    combine : true,
 		    compress : true,
@@ -141,7 +140,8 @@
 			this.js = this[0].js;
 			// create a new source map
 			processSourceMap(this);
-			// extract coffeescript helper functions from the output and the sourcemap
+			// extract coffeescript helper functions from the output and the
+			// sourcemap
 			extractCoffeeScriptHelpers(this);
 		};
 		OutputCoffeeScript.prototype = {
@@ -155,7 +155,9 @@
 			    var fragments = [].concat(this[0].fragments), result = [];
 			    for ( var offset, i = 0, size = this.helperOffsets.length; i < size; i++) {
 				    offset = this.helperOffsets[i];
-				    fragments.splice(offset.index, offset.count);
+				    for(var i=offset.index, size = i+offset.count;i<size; i++){
+				    	fragments[i].code = fragments[i].code.replace(/[^\n]*/g,"");
+				    }
 			    }
 			    for ( var i = 0, size = fragments.length; i < size; i++) {
 				    result.push(fragments[i].code);
@@ -210,7 +212,7 @@
 			var r, m, w;
 			for (w in result.options.csHelpers) {
 				r = result.options.csHelpers[w];
-				if (/* !r.found && */ r.rx.test(f.code)) {
+				if (/* !r.found && */r.rx.test(f.code)) {
 					m = f.code.match(r.rx);
 					if (m.length > 0 && !isUndef(m[1])) {
 						r.found = true;
@@ -228,7 +230,7 @@
 					processFragment(f, script);
 					var q = 1;
 					
-					trace(script);
+					//trace(script);
 					
 					// todo cut away from the sourceMap
 					if (/^\s*?;\s*?$/.test(script[0].fragments[i + 1].code)) {
@@ -244,21 +246,9 @@
 					    index : i,
 					    count : q
 					});
-					removeFromSourcemap(script);
 					// stop here, we've found what we were looking for
 					break;
 				}
-			}
-		}
-		
-		function removeFromSourcemap(script){
-			var i = script.helperOffsets[0].index, 
-				size = i+script.helperOffsets[0].count, 
-				start = script.fragments[i]., length, 
-				sg = SourceMapGenerator.fromSourceMap(this[1]);
-			
-			for (; i < count; i++){
-				
 			}
 		}
 		
