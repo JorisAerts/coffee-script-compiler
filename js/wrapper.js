@@ -213,11 +213,6 @@
 				if (/* !r.found && */ r.rx.test(f.code)) {
 					m = f.code.match(r.rx);
 					if (m.length > 0 && !isUndef(m[1])) {
-						
-						// cut off fragment.start + m.index from the sourcemap
-						// until m[0].length
-						// using replaceRight 
-						
 						r.found = true;
 						r.code = m[1];
 					}
@@ -249,9 +244,21 @@
 					    index : i,
 					    count : q
 					});
+					removeFromSourcemap(script);
 					// stop here, we've found what we were looking for
 					break;
 				}
+			}
+		}
+		
+		function removeFromSourcemap(script){
+			var i = script.helperOffsets[0].index, 
+				size = i+script.helperOffsets[0].count, 
+				start = script.fragments[i]., length, 
+				sg = SourceMapGenerator.fromSourceMap(this[1]);
+			
+			for (; i < count; i++){
+				
 			}
 		}
 		
