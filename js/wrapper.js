@@ -55,10 +55,20 @@
 		};
 		Output.prototype = {
 		    compile : function() {
-			    var result = [];
+			    var result = [], lines = [], compilation, m, rx_nl = /\r?\n/g, lcount;
+			    
 			    for ( var i = 0, size = this.contents.length; i < size; i++) {
 				    trace("Compiling" + (this.contents[i].filename ? " " + this.contents[i].filename : "") + "...");
-				    result.push(this.contents[i].compile().result);
+				    compilation = this.contents[i].compile().result;
+				    result.push(compilation);
+				    if (this.options.combine === true) {
+					    m = compilation.match(rx_nl);
+					    lcount = 1;
+					    if (m && m.length) {
+					    	lcount = m.length;
+					    }
+					    lines.push(lcount);
+				    }
 			    }
 			    var ret = [], code, nl = "\n";
 			    if (this.options.combine === true) {
@@ -155,8 +165,8 @@
 			    var fragments = [].concat(this[0].fragments), result = [];
 			    for ( var offset, i = 0, size = this.helperOffsets.length; i < size; i++) {
 				    offset = this.helperOffsets[i];
-				    for(var i=offset.index, size = i+offset.count;i<size; i++){
-				    	fragments[i].code = fragments[i].code.replace(/[^\n]*/g,"");
+				    for ( var i = offset.index, size = i + offset.count; i < size; i++) {
+					    fragments[i].code = fragments[i].code.replace(/[^\n]+/g, "");
 				    }
 			    }
 			    for ( var i = 0, size = fragments.length; i < size; i++) {
@@ -230,7 +240,7 @@
 					processFragment(f, script);
 					var q = 1;
 					
-					//trace(script);
+					// trace(script);
 					
 					// todo cut away from the sourceMap
 					if (/^\s*?;\s*?$/.test(script[0].fragments[i + 1].code)) {
@@ -273,7 +283,6 @@
 		
 		// minify using UglifyJS
 		function minify(script, options) {
-			trace("Minifying...")
 			script = wrapScript(script, options);
 			
 			if (options.compress === false && options.mangleNames === false) {
@@ -287,23 +296,23 @@
 			    source_map : sourceMap
 			});
 			
-			trace(" -> Parsing...");
+			trace("Parsing...");
 			ast = UglifyJS.parse(script);
 			ast.figure_out_scope();
 			
 			if (options.compress === true) {
-				trace(" -> Compressing...");
+				trace("Compressing...");
 				compressor = UglifyJS.Compressor({});
 				ast = ast.transform(compressor);
 			}
 			
 			if (options.mangleNames === true) {
-				trace(" -> Mangling names...");
+				trace("Mangling names...");
 				ast.compute_char_frequency();
 				ast.mangle_names();
 			}
 			
-			trace(" -> Finalizing...");
+			trace("Finalizing...");
 			ast.print(stream);
 			
 			return {
