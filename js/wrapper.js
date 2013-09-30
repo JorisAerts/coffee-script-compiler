@@ -55,7 +55,7 @@
 		};
 		Output.prototype = {
 		    compile : function() {
-			    var result = [], lines = [], compilation, m, rx_nl = /\r?\n/g, lcount;
+			    var result = [], compilations = [], compilation, m, rx_nl = /\r?\n/g, lcount;
 			    
 			    for ( var i = 0, size = this.contents.length; i < size; i++) {
 				    trace("Compiling" + (this.contents[i].filename ? " " + this.contents[i].filename : "") + "...");
@@ -65,14 +65,21 @@
 					    m = compilation.match(rx_nl);
 					    lcount = 1;
 					    if (m && m.length) {
-					    	lcount = m.length;
+						    lcount = m.length;
 					    }
-					    lines.push(lcount);
+					    compilations.push({
+					        file : this.contents[i].filename,
+					        code : compilation,
+					        lines : lcount,
+					        sourceMap : this.contents[i].getSourceMap()
+					    });
 				    }
 			    }
 			    var ret = [], code, nl = "\n";
 			    if (this.options.combine === true) {
-				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options);
+				    
+				    var _package = combineSourceMaps(this, compilations);
+				    ret = minify(getHelpersDeclaration(this) + nl + result.join(nl), this.options, _package.sourceMap);
 				    
 				    // TODO: add the sourceMaps...
 				    
@@ -86,6 +93,39 @@
 			    this.contents.push(OutputScript.create(script, filename, type, this.options));
 		    }
 		};
+		
+		function combineSourceMaps(obj, compilations) {
+			var code = "", generator = new sourceMap.SourceMapGenerator({
+			    file : null,
+			    sourceRoot : null
+			}),
+
+			helpers = getHelpersDeclaration(obj) + "\n";
+			
+			for ( var lines = 2, c, i = 0, size = compilations.length; i < size; i++) {
+				c = compilations[i];
+				code += c.code + "\n";
+				c.sourceMap.eachMapping(function(mapping) {
+					generator.addMapping({
+					    generated : {
+					        line : mapping.generatedLine + lines,
+					        column : mapping.generatedColumn
+					    },
+					    original : {
+					        line : mapping.originalLine + lines,
+					        column : mapping.originalColumn
+					    },
+					    source : c.file || "(unknown)",
+					    name : mapping.name
+					});
+				});
+				lines += c.lines;
+			}
+			return {
+			    code : code,
+			    sourceMap : generator.toString()
+			}
+		}
 		
 		/** One individual render item. */
 		OutputScript = function CompilationResult(script, options) {
@@ -131,7 +171,25 @@
 		    },
 		    _getJS : function() {
 			    return this.code;
-		    }
+		    },
+			getSourceMap: function(){
+				generator = new sourceMap.SourceMapGenerator({
+				    file : null,
+				    sourceRoot : null
+				});
+				generator.addMapping({
+				    generated : {
+				        line : 1,
+				        column : 1
+				    },
+				    original : {
+				        line : 1,
+				        column : 1
+				    },
+				    source : this.filename || "(unknown)"
+				});
+				return new sourceMap.SourceMapConsumer(generator.toJSON());
+			}
 		};
 		
 		/** Individual CoffeeScript */
@@ -173,7 +231,10 @@
 				    result.push(fragments[i].code);
 			    }
 			    return result.join("");
-		    }
+		    },
+			getSourceMap: function(){
+				return this[1];
+			}
 		};
 		
 		/** Initialization function */
@@ -282,7 +343,7 @@
 		}
 		
 		// minify using UglifyJS
-		function minify(script, options) {
+		function minify(script, options, origSourceMap) {
 			script = wrapScript(script, options);
 			
 			if (options.compress === false && options.mangleNames === false) {
@@ -290,7 +351,9 @@
 			}
 			
 			var stream, ast, compressor, sourceMap;
-			sourceMap = UglifyJS.SourceMap({});
+			sourceMap = UglifyJS.SourceMap({
+				orig : origSourceMap
+			});
 			stream = UglifyJS.OutputStream({
 			    space_colon : false,
 			    source_map : sourceMap

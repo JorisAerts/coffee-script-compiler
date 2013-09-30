@@ -11,6 +11,7 @@ import com.jorisaerts.cscompiler.compilers.result.CompilationResultList;
 import com.jorisaerts.cscompiler.dependencies.DependencyList;
 import com.jorisaerts.cscompiler.dependencies.FileList;
 import com.jorisaerts.cscompiler.helpers.FileHelper;
+import com.jorisaerts.cscompiler.helpers.FileIOHelper;
 import com.jorisaerts.cscompiler.log.QuietLogStream;
 
 public class Compilation extends CompilationBase {
@@ -68,23 +69,26 @@ public class Compilation extends CompilationBase {
 		long starttime = System.currentTimeMillis();
 		FileList fileList = resolveDependencies();
 		CompilationResultList lst = null;
-		
+
 		try (CoffeeScriptCompiler compiler = Compiler.newInstance()) {
 			for (File file : fileList /* FileHelper.getCoffeeScriptFiles(fileList) */) {
 				compiler.add(file);
 			}
 
 			lst = compiler.compile();
-			
+
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 
 		long totaltime = System.currentTimeMillis() - starttime;
 		out.println("Compilation done in " + totaltime / 1000.0 + " seconds.");
-		
+
+		FileIOHelper.writeFile("/tmp/out.js", lst.get(0).getCode());
+		FileIOHelper.writeFile("/tmp/out.js.map", lst.get(0).getSourceMap().getV3());
+
 		System.out.println(lst);
-		
+
 	}
 
 }
