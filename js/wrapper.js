@@ -112,7 +112,7 @@
 					        column : mapping.generatedColumn
 					    },
 					    original : {
-					        line : mapping.originalLine + lines,
+					        line : mapping.originalLine,
 					        column : mapping.originalColumn
 					    },
 					    source : c.file || "(unknown)",
