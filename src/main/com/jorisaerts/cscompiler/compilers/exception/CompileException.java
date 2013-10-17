@@ -1,7 +1,8 @@
 package com.jorisaerts.cscompiler.compilers.exception;
 
-@SuppressWarnings("serial")
 public class CompileException extends Exception {
+
+	private static final long serialVersionUID = -5169982652270723206L;
 
 	public CompileException(Exception e, Integer line, Integer column, String code) {
 		super(getMessage(e, line, column, code));

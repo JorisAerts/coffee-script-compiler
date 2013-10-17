@@ -2,9 +2,9 @@ package com.jorisaerts.cscompiler.dependencies.exception;
 
 import java.io.File;
 
-@SuppressWarnings("serial")
 public class CircularDependencyException extends RuntimeException {
 
+	private static final long serialVersionUID = 3525879675248343486L;
 	File sourceFile;
 	File targetFile;
 

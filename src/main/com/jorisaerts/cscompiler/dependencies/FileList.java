@@ -3,8 +3,9 @@ package com.jorisaerts.cscompiler.dependencies;
 import java.io.File;
 import java.util.ArrayList;
 
-@SuppressWarnings("serial")
 public class FileList extends ArrayList<File> {
+
+	private static final long serialVersionUID = -7191187731903826985L;
 
 	@Override
 	public boolean contains(Object o) {
